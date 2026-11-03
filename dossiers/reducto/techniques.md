@@ -1,0 +1,15 @@
+# Reducto — engineering techniques (public sources)
+
+Each item: what Reducto's own engineering writing documents, then why it transfers. All figures are **vendor-stated** (Reducto engineering blog) unless noted.
+
+1. **Deep Extract verify loop.** Extract → verify against the source → re-extract until prompt-defined reconciliation criteria pass, with per-value citations (page + bbox + source text + confidence). *Transfer:* this is a harness, not a model — buildable on any parser that emits grounded citations.
+2. **Repetition detection for small VLMs.** A tuned vLLM detector trained on 40k pages: 100% precision / 98% recall, median stop at token 1,813, plus a custom long-pattern detector. *Transfer:* looping is a serving-layer failure with a serving-layer fix; it is also pure latency if unfixed.
+3. **Model routing as constrained optimization.** Per-request gain δ = big-model minus small-model output; escalate iff δ − λc > 0. Paired eval on 8,276 requests: **43.4% gained nothing** from the bigger model. Router features are page/OCR-level; a GBT decides. *Transfer:* escalation discipline is the largest single throughput lever available to any cascade — measure the gain distribution before setting thresholds.
+4. **Speculative decoding limits.** MTP plateaus at ~3–4 accepted tokens and *loses* at concurrency ~64–80. *Transfer:* benchmark decoding tricks at production concurrency, not at batch 1.
+5. **CV serving economics.** Sub-10M-parameter detectors (text/tables/checkboxes/equations/reading order) behind Triton + TensorRT; the bottleneck was CPU preprocessing — fixing it moved throughput 17 → 148.5 img/s. *Transfer:* profile the pipeline, not the model.
+6. **Fair queueing.** A vendored Redis queue (streaq) with Little's-Law fair throttling: P50 latency ÷3.9, P99 ÷11. *Transfer:* multi-tenant fairness is a queueing property, not a capacity purchase.
+7. **LLM-judge hygiene.** Frontier-model judges hallucinate table errors against construction-known ground truth. *Transfer:* eval harnesses need ground truth built by construction, and judge outputs need their own verification — directly relevant to any scorer an agent team ships.
+8. **Chart extraction.** Per-component detector models; a verifier loop failed (5–10% point error). *Transfer:* decomposition beats self-critique for geometric outputs.
+9. **The r-1 lifecycle (inference, labeled).** Reducto ran its multi-stage pipeline for years across billions of pages, then distilled it into a single post-trained model. The pipeline generated the training data. *Transfer:* "pipeline first, model second" is the observed order — a local system's resolved-unknown corpus (e.g., Timothy's holds) is the training set for its own future single-model tier.
+
+**Open artifacts (Reducto-authored):** RolmOCR (Apache-2.0; explicitly separate from production, superseded), rd-tablebench, table-judge-benchmark, gdp-pdf-benchmark (MIT), Reducto-Eval, SDKs, docx-editor (MIT). No Reducto-authored arXiv paper was found (2026-11-02).
